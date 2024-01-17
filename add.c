@@ -3,17 +3,17 @@
  * f_add - adds the top two elements of the stack.
  * @head: stack head
  * @counter: line_number
- * Return: no return
+ * Return: no return sucess
 */
 void f_add(stack_t **head, unsigned int counter)
 {
-	stack_t *h;
+	stack_t *i;
 	int len = 0, aux;
 
-	h = *head;
-	while (h)
+	i = *head;
+	while (i)
 	{
-		h = h->next;
+		i = i->next;
 		len++;
 	}
 	if (len < 2)
@@ -24,9 +24,9 @@ void f_add(stack_t **head, unsigned int counter)
 		free_stack(*head);
 		exit(EXIT_FAILURE);
 	}
-	h = *head;
-	aux = h->n + h->next->n;
-	h->next->n = aux;
-	*head = h->next;
-	free(h);
+	i = *head;
+	aux = i->n + i->next->n;
+	i->next->n = aux;
+	*head = i->next;
+	free(i);
 }
