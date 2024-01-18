@@ -1,70 +1,149 @@
+/*
+ * File: monty_funcs_1.c
+ * Auth: Bennett Dixon
+ *       Brian Maema  **   Keith Clinton
+ */
+
 #include "monty.h"
 
-/**
- * m_swap - swaps the top two elements of the stack
- * @stack: pointer of pointer to actual stack
- * @line_number: file line number
- *
- */
-void m_swap(stack_t **stack, unsigned int line_number)
-{
-	stack_t *temp = *stack, *temp1;
+void monty_push(stack_t **stack, unsigned int line_number);
+void monty_pall(stack_t **stack, unsigned int line_number);
+void monty_pint(stack_t **stack, unsigned int line_number);
+void monty_pop(stack_t **stack, unsigned int line_number);
+void monty_swap(stack_t **stack, unsigned int line_number);
 
-	if ((*stack) == NULL || (*stack)->next == NULL)
+/**
+ * monty_push - Pushes a value to a stack_t linked list.
+ * @stack: A pointer to the top mode node of a stack_t linked list.
+ * @line_number: The current working line number of a Monty bytecodes file.
+ */
+void monty_push(stack_t **stack, unsigned int line_number)
+{
+	stack_t *tmp, *new;
+	int i;
+
+	new = malloc(sizeof(stack_t));
+	if (new == NULL)
 	{
-		fprintf(stderr, "L%d: can't swap, stack too short\n", line_number);
-		all_free();
-		frees(*stack);
-		exit(EXIT_FAILURE);
+		set_op_tok_error(malloc_error());
+		return;
 	}
 
-	if (temp && temp->next)
+	if (op_toks[1] == NULL)
 	{
-		temp1 = temp->next;
-		if (temp1->next)
+		set_op_tok_error(no_int_error(line_number));
+		return;
+	}
+
+	for (i = 0; op_toks[1][i]; i++)
+	{
+		if (op_toks[1][i] == '-' && i == 0)
+			continue;
+		if (op_toks[1][i] < '0' || op_toks[1][i] > '9')
 		{
-			temp1->next->prev = temp;
+			set_op_tok_error(no_int_error(line_number));
+			return;
 		}
-		temp->next = temp1->next;
-		temp1->prev = NULL;
-		temp1->next = temp;
-		temp->prev = temp1;
-		*stack = temp1;
 	}
-}
+	new->n = atoi(op_toks[1]);
 
-/**
- * m_add - adds the top two elements of the stack
- * @stack: pointer of pointer to actual stack
- * @line_number: file line number
- *
- */
-void m_add(stack_t **stack, unsigned int line_number)
-{
-	stack_t *temp = *stack, *temp1;
-
-	if ((*stack) == NULL || (*stack)->next == NULL)
+	if (check_mode(*stack) == STACK) /* STACK mode insert at front */
 	{
-		fprintf(stderr, "L%d: can't add, stack too short\n", line_number);
-		all_free();
-		frees(*stack);
-		exit(EXIT_FAILURE);
+		tmp = (*stack)->next;
+		new->prev = *stack;
+		new->next = tmp;
+		if (tmp)
+			tmp->prev = new;
+		(*stack)->next = new;
 	}
-	temp1 = temp->next;
-	temp1->n += temp->n;
-	temp1->prev = NULL;
-	*stack = temp1;
-	free(temp);
+	else /* QUEUE mode insert at end */
+	{
+		tmp = *stack;
+		while (tmp->next)
+			tmp = tmp->next;
+		new->prev = tmp;
+		new->next = NULL;
+		tmp->next = new;
+	}
 }
 
 /**
- * m_nop - doesn't do anything
- * @stack: pointer of pointer to actual stack
- * @line_number: file line number
- *
+ * monty_pall - Prints the values of a stack_t linked list.
+ * @stack: A pointer to the top mode node of a stack_t linked list.
+ * @line_number: The current working line number of a Monty bytecodes file.
  */
-void m_nop(stack_t **stack, unsigned int line_number)
+void monty_pall(stack_t **stack, unsigned int line_number)
 {
-	(void) stack;
-	(void) line_number;
+	stack_t *tmp = (*stack)->next;
+
+	while (tmp)
+	{
+		printf("%d\n", tmp->n);
+		tmp = tmp->next;
+	}
+	(void)line_number;
+}
+
+/**
+ * monty_pint - Prints the top value of a stack_t linked list.
+ * @stack: A pointer to the top mode node of a stack_t linked list.
+ * @line_number: The current working line number of a Monty bytecodes file.
+ */
+void monty_pint(stack_t **stack, unsigned int line_number)
+{
+	if ((*stack)->next == NULL)
+	{
+		set_op_tok_error(pint_error(line_number));
+		return;
+	}
+
+	printf("%d\n", (*stack)->next->n);
+}
+
+
+/**
+ * monty_pop - Removes the top value element of a stack_t linked list.
+ * @stack: A pointer to the top mode node of a stack_t linked list.
+ * @line_number: The current working line number of a Monty bytecodes file.
+ */
+void monty_pop(stack_t **stack, unsigned int line_number)
+{
+	stack_t *next = NULL;
+
+	if ((*stack)->next == NULL)
+	{
+		set_op_tok_error(pop_error(line_number));
+		return;
+	}
+
+	next = (*stack)->next->next;
+	free((*stack)->next);
+	if (next)
+		next->prev = *stack;
+	(*stack)->next = next;
+}
+
+/**
+ * monty_swap - Swaps the top two value elements of a stack_t linked list.
+ * @stack: A pointer to the top mode node of a stack_t linked list.
+ * @line_number: The current working line number of a Monty bytecodes file.
+ */
+void monty_swap(stack_t **stack, unsigned int line_number)
+{
+	stack_t *tmp;
+
+	if ((*stack)->next == NULL || (*stack)->next->next == NULL)
+	{
+		set_op_tok_error(short_stack_error(line_number, "swap"));
+		return;
+	}
+
+	tmp = (*stack)->next->next;
+	(*stack)->next->next = tmp->next;
+	(*stack)->next->prev = tmp;
+	if (tmp->next)
+		tmp->next->prev = (*stack)->next;
+	tmp->next = (*stack)->next;
+	tmp->prev = *stack;
+	(*stack)->next = tmp;
 }
