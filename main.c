@@ -1,45 +1,87 @@
+#include <stdio.h>
 #include "monty.h"
-bus = {NULL, NULL, NULL, 0};
+
+arguments_t *arg = NULL;
+ssize_t getline(char **lineptr, size_t *n, FILE *stream);
 /**
-* main - monty code interpreter
-* @argc: number of arguments
-* @argv: monty file location
-* Return: 0 is success
-*/
+ * main - program entry
+ * @argc: argument count
+ * @argv: array of arguments availed
+ *
+ * Return: EXIT_SUCCESS on success EXIT_FAILURE on fail
+ */
 int main(int argc, char *argv[])
 {
-	char *content;
-	FILE *file;
-	size_t size = 0;
-	ssize_t read_line = 1;
-	stack_t *stack = NULL;
-	unsigned int counter = 0;
+	FILE *mfile;
+	char *line;
+	size_t i = 0;
+	ssize_t x = 1;
+	stack_t *list = NULL;
+	unsigned int y = 0;
 
 	if (argc != 2)
 	{
 		fprintf(stderr, "USAGE: monty file\n");
 		exit(EXIT_FAILURE);
 	}
-	file = fopen(argv[1], "r");
-	bus.file = file;
-	if (!file)
+
+	arg = malloc(sizeof(arguments_t));
+	if (arg == NULL)
 	{
-		fprintf(stderr, "Error: Can't open file %s\n", argv[1]);
-		exit(EXIT_FAILURE);
+		malloc_fail();
 	}
-	while (read_line > 0)
+	arg->l = 0;
+	mfile = fopen(argv[1], "r");
+	arg->montyfile = mfile;
+	if (arg->montyfile == NULL || mfile == NULL)
 	{
-		content = NULL;
-		read_line = getline(&content, &size, file);
-		bus.content = content;
-		counter++;
-		if (read_line > 0)
+		fileopen(argv[1]);
+	}
+
+	while (x > 0)
+	{
+		line = NULL;
+		x = getline(&line, &i, mfile);
+		arg->line = line;
+		y++;
+		if (x > 0)
 		{
-			execute(content, &stack, counter, file);
+			getfunc(line, &list, y, mfile);
 		}
-		free(content);
+		free(line);
 	}
-	free_stack(stack);
-	fclose(file);
-return (0);
+	frees(list);
+	fclose(mfile);
+	free(arg);
+	return (0);
+}
+
+/**
+ * frees - frees linked list stack
+ * @h: pointer to head of linked list
+ */
+void frees(stack_t *h)
+{
+	stack_t *a = h;
+
+	if (h == NULL)
+	{
+		return;
+	}
+	while (h != NULL)
+	{
+		a = h;
+		h = h->next;
+		free(a);
+	}
+}
+
+/**
+ * all_free - frees all allocated memory
+ *
+ */
+void all_free(void)
+{
+	fclose(arg->montyfile);
+	free(arg->line);
 }
